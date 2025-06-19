@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddItemDto } from './dto/add-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -47,7 +51,11 @@ export class CartService {
     // continue com sua lógica aqui!
   }
 
-  async updateItem(cartId: string, itemId: string, updateItemDto: UpdateItemDto) {
+  async updateItem(
+    cartId: string,
+    itemId: string,
+    updateItemDto: UpdateItemDto,
+  ) {
     // Verificar se o item existe no carrinho
     const item = await this.prisma.cartItem.findFirst({
       where: {
@@ -57,14 +65,15 @@ export class CartService {
     });
 
     if (!item) {
-      throw new NotFoundException(`Item with ID ${itemId} not found in cart ${cartId}`);
+      throw new NotFoundException(
+        `Item with ID ${itemId} not found in cart ${cartId}`,
+      );
     }
 
     // continue com sua lógica ou refaça
   }
 
   async removeItem(cartId: string, itemId: string) {
-
     return { success: true };
   }
-} 
+}

@@ -55,19 +55,20 @@ coffee-delivery-api/
 ## Configuração Inicial
 
 1. **Inicialização do Projeto**
+
    ```bash
    # Criar projeto NestJS
    nest new coffee-delivery-api
    cd coffee-delivery-api
-   
+
    # Instalar dependências
    npm install @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata rxjs
    npm install --save-dev @nestjs/cli @nestjs/schematics @types/express @types/node typescript
-   
+
    # Instalar Prisma
    npm install @prisma/client
    npm install --save-dev prisma
-   
+
    # Inicializar Prisma
    npx prisma init
    ```
@@ -102,7 +103,7 @@ model Coffee {
   imageUrl    String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  
+
   // Relacionamentos
   tags        CoffeeTag[]
   cartItems   CartItem[]
@@ -113,7 +114,7 @@ model Tag {
   name      String      @unique
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  
+
   // Relacionamentos
   coffees   CoffeeTag[]
 }
@@ -132,7 +133,7 @@ model Cart {
   userId    String?    // Opcional para usuários não autenticados
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  
+
   // Relacionamentos
   items     CartItem[]
   orders    Order[]
@@ -144,7 +145,7 @@ model CartItem {
   unitPrice  Decimal  @db.Decimal(10, 2)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
+
   // Relacionamentos
   cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   cartId     String
@@ -162,7 +163,7 @@ model Order {
   status      String   @default("pending")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Relacionamentos
   cart        Cart     @relation(fields: [cartId], references: [id])
   cartId      String
@@ -200,6 +201,7 @@ export class AppModule {}
    Crie o diretório `src/prisma` e os seguintes arquivos:
 
    `src/prisma/prisma.module.ts`:
+
    ```typescript
    import { Module } from '@nestjs/common';
    import { PrismaService } from './prisma.service';
@@ -212,12 +214,16 @@ export class AppModule {}
    ```
 
    `src/prisma/prisma.service.ts`:
+
    ```typescript
    import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
    import { PrismaClient } from '@prisma/client';
 
    @Injectable()
-   export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+   export class PrismaService
+     extends PrismaClient
+     implements OnModuleInit, OnModuleDestroy
+   {
      constructor() {
        super({
          log: ['query', 'info', 'warn', 'error'],
@@ -239,6 +245,7 @@ export class AppModule {}
 1. **Entidade Coffee**
 
    `src/coffees/entities/coffee.entity.ts`:
+
    ```typescript
    import { Coffee as PrismaCoffee } from '@prisma/client';
 
@@ -250,7 +257,7 @@ export class AppModule {}
      imageUrl: string;
      createdAt: Date;
      updatedAt: Date;
-     
+
      // Campos adicionais não presentes no modelo Prisma
      tags?: { id: string; name: string }[];
    }
@@ -259,8 +266,19 @@ export class AppModule {}
 2. **DTOs para Coffee**
 
    `src/coffees/dto/create-coffee.dto.ts`:
+
    ```typescript
-   import { IsNotEmpty, IsString, IsNumber, Min, IsUrl, IsArray, ArrayNotEmpty, MaxLength, MinLength } from 'class-validator';
+   import {
+     IsNotEmpty,
+     IsString,
+     IsNumber,
+     Min,
+     IsUrl,
+     IsArray,
+     ArrayNotEmpty,
+     MaxLength,
+     MinLength,
+   } from 'class-validator';
    import { Type } from 'class-transformer';
 
    export class CreateCoffeeDto {
@@ -288,6 +306,7 @@ export class AppModule {}
    ```
 
    `src/coffees/dto/update-coffee.dto.ts`:
+
    ```typescript
    import { PartialType } from '@nestjs/mapped-types';
    import { CreateCoffeeDto } from './create-coffee.dto';
@@ -296,6 +315,7 @@ export class AppModule {}
    ```
 
    `src/coffees/dto/coffee-response.dto.ts`:
+
    ```typescript
    export class CoffeeResponseDto {
      id: string;
@@ -312,6 +332,7 @@ export class AppModule {}
 3. **Serviço Coffees**
 
    `src/coffees/coffees.service.ts`:
+
    ```typescript
    import { Injectable, NotFoundException } from '@nestjs/common';
    import { PrismaService } from '../prisma/prisma.service';
@@ -333,9 +354,9 @@ export class AppModule {}
          },
        });
 
-       return coffees.map(coffee => ({
+       return coffees.map((coffee) => ({
          ...coffee,
-         tags: coffee.tags.map(coffeeTag => coffeeTag.tag),
+         tags: coffee.tags.map((coffeeTag) => coffeeTag.tag),
        }));
      }
 
@@ -357,7 +378,7 @@ export class AppModule {}
 
        return {
          ...coffee,
-         tags: coffee.tags.map(coffeeTag => coffeeTag.tag),
+         tags: coffee.tags.map((coffeeTag) => coffeeTag.tag),
        };
      }
 
@@ -368,7 +389,7 @@ export class AppModule {}
          data: {
            ...coffeeData,
            tags: {
-             create: tagIds.map(tagId => ({
+             create: tagIds.map((tagId) => ({
                tag: {
                  connect: { id: tagId },
                },
@@ -400,7 +421,7 @@ export class AppModule {}
 
          // Depois, criar os novos relacionamentos
          await Promise.all(
-           tagIds.map(tagId =>
+           tagIds.map((tagId) =>
              this.prisma.coffeeTag.create({
                data: {
                  coffee: { connect: { id } },
@@ -443,7 +464,14 @@ export class AppModule {}
        limit?: number;
        offset?: number;
      }) {
-       const { startDate, endDate, name, tags, limit = 10, offset = 0 } = params;
+       const {
+         startDate,
+         endDate,
+         name,
+         tags,
+         limit = 10,
+         offset = 0,
+       } = params;
 
        // Construir o filtro
        const where: any = {};
@@ -499,9 +527,9 @@ export class AppModule {}
 
        // Formatar a resposta
        return {
-         data: coffees.map(coffee => ({
+         data: coffees.map((coffee) => ({
            ...coffee,
-           tags: coffee.tags.map(coffeeTag => coffeeTag.tag),
+           tags: coffee.tags.map((coffeeTag) => coffeeTag.tag),
          })),
          pagination: {
            total,
@@ -517,8 +545,20 @@ export class AppModule {}
 4. **Controller Coffees**
 
    `src/coffees/coffees.controller.ts`:
+
    ```typescript
-   import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpCode, Query } from '@nestjs/common';
+   import {
+     Controller,
+     Get,
+     Post,
+     Body,
+     Patch,
+     Param,
+     Delete,
+     HttpStatus,
+     HttpCode,
+     Query,
+   } from '@nestjs/common';
    import { CoffeesService } from './coffees.service';
    import { CreateCoffeeDto } from './dto/create-coffee.dto';
    import { UpdateCoffeeDto } from './dto/update-coffee.dto';
@@ -543,15 +583,15 @@ export class AppModule {}
        // Processar os parâmetros
        let startDate: Date | undefined;
        let endDate: Date | undefined;
-       
+
        if (dateRange) {
          const [start, end] = dateRange.split(',');
          startDate = start ? new Date(start) : undefined;
          endDate = end ? new Date(end) : undefined;
        }
-       
+
        const tagsList = tags ? tags.split(',') : [];
-       
+
        return this.coffeesService.searchCoffees({
          startDate,
          endDate,
@@ -574,7 +614,10 @@ export class AppModule {}
      }
 
      @Patch(':id')
-     async update(@Param('id') id: string, @Body() updateCoffeeDto: UpdateCoffeeDto) {
+     async update(
+       @Param('id') id: string,
+       @Body() updateCoffeeDto: UpdateCoffeeDto,
+     ) {
        return this.coffeesService.update(id, updateCoffeeDto);
      }
 
@@ -589,6 +632,7 @@ export class AppModule {}
 5. **Módulo Coffees**
 
    `src/coffees/coffees.module.ts`:
+
    ```typescript
    import { Module } from '@nestjs/common';
    import { CoffeesService } from './coffees.service';
@@ -609,6 +653,7 @@ export class AppModule {}
 1. **Entidade Tag**
 
    `src/tags/entities/tag.entity.ts`:
+
    ```typescript
    import { Tag as PrismaTag } from '@prisma/client';
 
@@ -623,6 +668,7 @@ export class AppModule {}
 2. **DTOs para Tag**
 
    `src/tags/dto/create-tag.dto.ts`:
+
    ```typescript
    import { IsNotEmpty, IsString } from 'class-validator';
 
@@ -634,6 +680,7 @@ export class AppModule {}
    ```
 
    `src/tags/dto/tag-response.dto.ts`:
+
    ```typescript
    export class TagResponseDto {
      id: string;
@@ -646,8 +693,13 @@ export class AppModule {}
 3. **Serviço Tags**
 
    `src/tags/tags.service.ts`:
+
    ```typescript
-   import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+   import {
+     Injectable,
+     NotFoundException,
+     ConflictException,
+   } from '@nestjs/common';
    import { PrismaService } from '../prisma/prisma.service';
    import { CreateTagDto } from './dto/create-tag.dto';
 
@@ -678,7 +730,9 @@ export class AppModule {}
          });
        } catch (error) {
          if (error.code === 'P2002') {
-           throw new ConflictException(`Tag with name ${createTagDto.name} already exists`);
+           throw new ConflictException(
+             `Tag with name ${createTagDto.name} already exists`,
+           );
          }
          throw error;
        }
@@ -699,8 +753,18 @@ export class AppModule {}
 4. **Controller Tags**
 
    `src/tags/tags.controller.ts`:
+
    ```typescript
-   import { Controller, Get, Post, Body, Param, Delete, HttpStatus, HttpCode } from '@nestjs/common';
+   import {
+     Controller,
+     Get,
+     Post,
+     Body,
+     Param,
+     Delete,
+     HttpStatus,
+     HttpCode,
+   } from '@nestjs/common';
    import { TagsService } from './tags.service';
    import { CreateTagDto } from './dto/create-tag.dto';
 
@@ -735,6 +799,7 @@ export class AppModule {}
 5. **Módulo Tags**
 
    `src/tags/tags.module.ts`:
+
    ```typescript
    import { Module } from '@nestjs/common';
    import { TagsService } from './tags.service';
@@ -755,6 +820,7 @@ export class AppModule {}
 1. **Entidades Cart e CartItem**
 
    `src/cart/entities/cart.entity.ts`:
+
    ```typescript
    import { Cart as PrismaCart } from '@prisma/client';
 
@@ -767,6 +833,7 @@ export class AppModule {}
    ```
 
    `src/cart/entities/cart-item.entity.ts`:
+
    ```typescript
    import { CartItem as PrismaCartItem } from '@prisma/client';
 
@@ -778,7 +845,7 @@ export class AppModule {}
      unitPrice: number | string;
      createdAt: Date;
      updatedAt: Date;
-     
+
      // Campos adicionais não presentes no modelo Prisma
      coffee?: {
        id: string;
@@ -793,6 +860,7 @@ export class AppModule {}
 2. **DTOs para Cart**
 
    `src/cart/dto/add-item.dto.ts`:
+
    ```typescript
    import { IsNotEmpty, IsString, IsInt, Min, Max } from 'class-validator';
    import { Type } from 'class-transformer';
@@ -811,6 +879,7 @@ export class AppModule {}
    ```
 
    `src/cart/dto/update-item.dto.ts`:
+
    ```typescript
    import { IsInt, Min, Max } from 'class-validator';
    import { Type } from 'class-transformer';
@@ -825,6 +894,7 @@ export class AppModule {}
    ```
 
    `src/cart/dto/cart-response.dto.ts`:
+
    ```typescript
    export class CartItemResponseDto {
      id: string;
@@ -852,8 +922,13 @@ export class AppModule {}
 3. **Serviço Cart**
 
    `src/cart/cart.service.ts`:
+
    ```typescript
-   import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+   import {
+     Injectable,
+     NotFoundException,
+     BadRequestException,
+   } from '@nestjs/common';
    import { PrismaService } from '../prisma/prisma.service';
    import { AddItemDto } from './dto/add-item.dto';
    import { UpdateItemDto } from './dto/update-item.dto';
@@ -908,25 +983,26 @@ export class AppModule {}
        }
 
        // Calcular subtotal para cada item
-       const items = cart.items.map(item => ({
+       const items = cart.items.map((item) => ({
          ...item,
          subtotal: Number(item.quantity) * Number(item.unitPrice),
          coffee: {
            ...item.coffee,
-           tags: item.coffee.tags.map(coffeeTag => coffeeTag.tag),
+           tags: item.coffee.tags.map((coffeeTag) => coffeeTag.tag),
          },
        }));
 
        // Calcular total de itens
-       const itemsTotal = items.reduce((sum, item) => sum + Number(item.subtotal), 0);
+       const itemsTotal = items.reduce(
+         (sum, item) => sum + Number(item.subtotal),
+         0,
+       );
 
        // Obter categorias únicas
        const uniqueCategories = Array.from(
          new Set(
-           items.flatMap(item => 
-             item.coffee.tags.map(tag => tag.name)
-           )
-         )
+           items.flatMap((item) => item.coffee.tags.map((tag) => tag.name)),
+         ),
        );
 
        // Calcular frete (R$3,75 por categoria única)
@@ -979,7 +1055,7 @@ export class AppModule {}
        if (existingItem) {
          // Atualizar quantidade do item existente
          const newQuantity = existingItem.quantity + quantity;
-         
+
          if (newQuantity > 5) {
            throw new BadRequestException('Maximum quantity per item is 5');
          }
@@ -992,7 +1068,8 @@ export class AppModule {}
 
          return {
            ...updatedItem,
-           subtotal: Number(updatedItem.quantity) * Number(updatedItem.unitPrice),
+           subtotal:
+             Number(updatedItem.quantity) * Number(updatedItem.unitPrice),
          };
        }
 
@@ -1013,7 +1090,11 @@ export class AppModule {}
        };
      }
 
-     async updateItem(cartId: string, itemId: string, updateItemDto: UpdateItemDto) {
+     async updateItem(
+       cartId: string,
+       itemId: string,
+       updateItemDto: UpdateItemDto,
+     ) {
        // Verificar se o item existe no carrinho
        const item = await this.prisma.cartItem.findFirst({
          where: {
@@ -1023,7 +1104,9 @@ export class AppModule {}
        });
 
        if (!item) {
-         throw new NotFoundException(`Item with ID ${itemId} not found in cart ${cartId}`);
+         throw new NotFoundException(
+           `Item with ID ${itemId} not found in cart ${cartId}`,
+         );
        }
 
        // Atualizar quantidade do item
@@ -1049,7 +1132,9 @@ export class AppModule {}
        });
 
        if (!item) {
-         throw new NotFoundException(`Item with ID ${itemId} not found in cart ${cartId}`);
+         throw new NotFoundException(
+           `Item with ID ${itemId} not found in cart ${cartId}`,
+         );
        }
 
        // Remover o item do carrinho
@@ -1065,8 +1150,19 @@ export class AppModule {}
 4. **Controller Cart**
 
    `src/cart/cart.controller.ts`:
+
    ```typescript
-   import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpCode } from '@nestjs/common';
+   import {
+     Controller,
+     Get,
+     Post,
+     Body,
+     Patch,
+     Param,
+     Delete,
+     HttpStatus,
+     HttpCode,
+   } from '@nestjs/common';
    import { CartService } from './cart.service';
    import { AddItemDto } from './dto/add-item.dto';
    import { UpdateItemDto } from './dto/update-item.dto';
@@ -1103,7 +1199,10 @@ export class AppModule {}
 
      @Delete(':cartId/items/:itemId')
      @HttpCode(HttpStatus.NO_CONTENT)
-     async removeItem(@Param('cartId') cartId: string, @Param('itemId') itemId: string) {
+     async removeItem(
+       @Param('cartId') cartId: string,
+       @Param('itemId') itemId: string,
+     ) {
        return this.cartService.removeItem(cartId, itemId);
      }
    }
@@ -1112,6 +1211,7 @@ export class AppModule {}
 5. **Módulo Cart**
 
    `src/cart/cart.module.ts`:
+
    ```typescript
    import { Module } from '@nestjs/common';
    import { CartService } from './cart.service';
@@ -1132,8 +1232,14 @@ export class AppModule {}
 1. **DTOs para Checkout**
 
    `src/checkout/dto/checkout.dto.ts`:
+
    ```typescript
-   import { IsNotEmpty, IsString, IsObject, ValidateNested } from 'class-validator';
+   import {
+     IsNotEmpty,
+     IsString,
+     IsObject,
+     ValidateNested,
+   } from 'class-validator';
    import { Type } from 'class-transformer';
 
    class AddressDto {
@@ -1175,6 +1281,7 @@ export class AppModule {}
    ```
 
    `src/checkout/dto/order-response.dto.ts`:
+
    ```typescript
    export class OrderItemDto {
      name: string;
@@ -1198,6 +1305,7 @@ export class AppModule {}
 2. **Serviço Checkout**
 
    `src/checkout/checkout.service.ts`:
+
    ```typescript
    import { Injectable, NotFoundException } from '@nestjs/common';
    import { PrismaService } from '../prisma/prisma.service';
@@ -1218,7 +1326,9 @@ export class AppModule {}
        const cart = await this.cartService.getCart(cartId);
 
        if (!cart || cart.items.length === 0) {
-         throw new NotFoundException(`Cart with ID ${cartId} not found or is empty`);
+         throw new NotFoundException(
+           `Cart with ID ${cartId} not found or is empty`,
+         );
        }
 
        // Criar o pedido
@@ -1236,7 +1346,7 @@ export class AppModule {}
        // Formatar a resposta
        return {
          id: order.id,
-         items: cart.items.map(item => ({
+         items: cart.items.map((item) => ({
            name: item.coffee.name,
            quantity: item.quantity,
            unitPrice: Number(item.unitPrice),
@@ -1256,8 +1366,15 @@ export class AppModule {}
 3. **Controller Checkout**
 
    `src/checkout/checkout.controller.ts`:
+
    ```typescript
-   import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
+   import {
+     Controller,
+     Post,
+     Body,
+     HttpStatus,
+     HttpCode,
+   } from '@nestjs/common';
    import { CheckoutService } from './checkout.service';
    import { CheckoutDto } from './dto/checkout.dto';
 
@@ -1276,6 +1393,7 @@ export class AppModule {}
 4. **Módulo Checkout**
 
    `src/checkout/checkout.module.ts`:
+
    ```typescript
    import { Module } from '@nestjs/common';
    import { CheckoutService } from './checkout.service';
@@ -1302,7 +1420,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Configurar validação global
   app.useGlobalPipes(
     new ValidationPipe({
@@ -1311,10 +1429,10 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  
+
   // Configurar CORS
   app.enableCors();
-  
+
   await app.listen(3000);
 }
 bootstrap();
@@ -1336,6 +1454,7 @@ npm run start:dev
 ## Endpoints Disponíveis
 
 ### Coffees
+
 - `GET /coffees` - Listar todos os cafés
 - `GET /coffees/:id` - Obter detalhes de um café
 - `POST /coffees` - Criar um novo café
@@ -1344,12 +1463,14 @@ npm run start:dev
 - `GET /coffees/search` - Buscar cafés com filtros
 
 ### Tags
+
 - `GET /tags` - Listar todas as tags
 - `GET /tags/:id` - Obter detalhes de uma tag
 - `POST /tags` - Criar uma nova tag
 - `DELETE /tags/:id` - Remover uma tag
 
 ### Cart
+
 - `POST /cart` - Criar um novo carrinho
 - `GET /cart/:id` - Obter detalhes de um carrinho
 - `POST /cart/:id/items` - Adicionar item ao carrinho
@@ -1357,4 +1478,5 @@ npm run start:dev
 - `DELETE /cart/:cartId/items/:itemId` - Remover item do carrinho
 
 ### Checkout
+
 - `POST /checkout` - Finalizar pedido

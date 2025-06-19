@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Coffee {
@@ -16,8 +17,9 @@ model Coffee {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   
-  // Relacionamentos incompleto
-  // tags
+  //relacionamentos 
+  tags CoffeeTag[]
+  cartItems CartItem[]
 }
 
 model Tag {
@@ -31,9 +33,12 @@ model Tag {
 }
 
 model CoffeeTag {
+  coffee    Coffee  @relation(fields: [coffeeId], references: [id])
   coffeeId  String
+  tag       Tag     @relation(fields: [tagId], references: [id])
   tagId     String
-  // Relacionamentos aqui
+
+  @@id([coffeeId, tagId])
 }
 
 model Cart {
@@ -44,6 +49,7 @@ model Cart {
   
   // Relacionamentos incompleto
   items     CartItem[]
+  
 }
 
 model CartItem {
@@ -53,5 +59,12 @@ model CartItem {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
-  // Relacionamentos aqui
+  // Relacionamentos
+  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId     String
+  coffee     Coffee   @relation(fields: [coffeeId], references: [id])
+  coffeeId   String
+
+  @@unique([cartId, coffeeId])
 }
+
